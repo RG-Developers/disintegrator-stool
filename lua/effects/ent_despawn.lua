@@ -4,7 +4,7 @@ function EFFECT:Init( data )
 
 	-- This is how long the despawn effect
 	-- takes from start to finish.
-	self.Time = 2.5
+	self.Time = 1
 	self.LifeTime = CurTime() + self.Time
 
 	local ent = data:GetEntity()
