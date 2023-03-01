@@ -8,7 +8,7 @@ TOOL.Information = {
 }
 
 
-local function DoRemoveEntity( ent )
+local function DoRemoveEntityNoSafeguard( ent )
 	if ( !IsValid( ent ) || ent:IsPlayer() ) then return false end
 
 	-- Nothing for the client to do here
@@ -17,7 +17,7 @@ local function DoRemoveEntity( ent )
 	-- Remove all constraints (this stops ropes from hanging around)
 	constraint.RemoveAll( ent )
 
-	local t = 5
+	local t = 2 -- Effect time
 
 	-- Remove it properly in ~1 second
 	timer.Simple( t-0.01, function() if ( IsValid( ent ) ) then
