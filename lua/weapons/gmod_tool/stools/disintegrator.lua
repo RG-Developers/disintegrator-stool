@@ -9,7 +9,7 @@ TOOL.Information = {
 
 local function DoRemoveEntity( entity, requester )
 	local ent = entity
-    if ( !IsValid( ent ) or ( ent:IsPlayer() && !requester:IsAdmin() ) ) then return false end
+    if ( not IsValid( ent ) or ( ent:IsPlayer() and not requester:IsAdmin() ) ) then return false end
 
 	-- Nothing for the client to do here
 	if ( CLIENT ) then return true end
@@ -19,9 +19,10 @@ local function DoRemoveEntity( entity, requester )
 
 	local t = 1 -- Effect time
 
-	if ent:IsNPC() then
+	if ent:IsNPC() and ent:Health() > 0 then
 		local oldrags = ents.FindByClass("prop_ragdoll")
-		while ent:Health() > 0 do ent:TakeDamage(1) end
+		ent:TakeDamage(ent:Health()-1)
+		ent:TakeDamage(2)
 		local newrags = ents.FindByClass("prop_ragdoll")
 		for i in pairs(newrags) do
 			for j in pairs(oldrags) do
@@ -29,6 +30,7 @@ local function DoRemoveEntity( entity, requester )
 			end
 		end
 		ent = newrags[1]
+		if not IsValid(ent) then return false end
 		for i=1,50 do
 			timer.Simple( t*i/50, function() if ( IsValid( ent ) ) then 
 				local effectdata = EffectData()
@@ -37,10 +39,10 @@ local function DoRemoveEntity( entity, requester )
 				util.Effect("npc_disintegration", effectdata)
 			end end)
 		end
-	elseif ent:IsPlayer() then
-		player.GetAll()[entity:EntIndex()]:SetNWBool("disintegration", true) 
+	elseif ent:IsPlayer() and ent:Health() > 0 then
 		local oldrags = ents.FindByClass("prop_ragdoll")
-		while ent:Health() > 0 do ent:TakeDamage(1) end
+		ent:TakeDamage(ent:Health()-1)
+		ent:TakeDamage(2)
 		local newrags = ents.FindByClass("prop_ragdoll")
 		for i in pairs(newrags) do
 			for j in pairs(oldrags) do
@@ -48,6 +50,8 @@ local function DoRemoveEntity( entity, requester )
 			end
 		end
 		ent = newrags[1]
+		if not IsValid(ent) then return false end
+		player.GetAll()[entity:EntIndex()]:SetNWBool("disintegration", true) 
 		for i=1,50 do
 			timer.Simple( t*i/50, function() if ( IsValid( ent ) ) then 
 				local effectdata = EffectData()
@@ -66,6 +70,8 @@ local function DoRemoveEntity( entity, requester )
 			end end)
 		end
 	end
+
+	if not IsValid(ent) then return false end
 
 	-- Make it non solid
 	ent:SetNotSolid( false )
@@ -98,7 +104,7 @@ end
 
 function TOOL:LeftClick( trace )
 	if ( DoRemoveEntity( trace.Entity, self:GetOwner() ) ) then
-		if ( !CLIENT ) then
+		if ( not CLIENT ) then
 			self:GetOwner():SendLua( "achievements.Remover()" )
 		end
 		return true
@@ -109,7 +115,7 @@ end
 
 function TOOL:RightClick( trace )
 	local Entity = trace.Entity
-	if ( !IsValid( Entity ) || Entity:IsPlayer() ) then return false end
+	if ( not IsValid( Entity ) or Entity:IsPlayer() ) then return false end
 	if ( CLIENT ) then return true end
 	local ConstrainedEntities = constraint.GetAllConstrainedEntities( trace.Entity )
 	local Count = 0
@@ -125,7 +131,7 @@ function TOOL:RightClick( trace )
 end
 
 function TOOL:Reload( trace )
-	if ( !IsValid( trace.Entity ) || trace.Entity:IsPlayer() ) then return false end
+	if ( not IsValid( trace.Entity ) or trace.Entity:IsPlayer() ) then return false end
 	if ( CLIENT ) then return true end
 	return constraint.RemoveAll( trace.Entity )
 
@@ -134,9 +140,3 @@ end
 function TOOL.BuildCPanel( CPanel )
 	CPanel:AddControl( "Header", { Description = "#tool.disintegrator.desc" } )
 end
-
-hook.Add("PlayerDeathThink", "disintegration", function(ply)
-	if ply:GetNWBool("disintegration") != nil or ply:GetNWBool("disintegration") == true then 
-		return false
-	end
-end)
